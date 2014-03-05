@@ -17,41 +17,43 @@
 %
 %
 
-num_iterations = 150;
-num_classes = 3;
+% Definitions
+% TODO: Put this in a function definition
+numIter = 150;
+numLabel = 3;
 
+% Load image
 % TODO:
 %  - If greyscale, create 1-column feature vector.  If RGB, convert to HSV
 %    and create 3-column feature matrix
-image = imread('test1.png');
-features = reshape(image, [], 1);
-[num_pixels, num_features] = size(features);
-label = randi(num_classes, num_pixels, 1);
+image = double(imread('test1.png'));
 
-% From paper (Page 2327)
-beta = 1;
+% Initialize class labels as random vector
+numPixel = numel(image(:, :, 1));
+label = randi(numLabel, numPixel, 1);
 
-% From Equation 11 (Page 2327)
-c1 = 80;
-c2 = 1 / num_features;
-alpha = @(t) c1*0.9^t + c2;
+% Configure simulated annealing options
+saopt = saoptimset('TemperatureFcn', @temperaturefcn, ...
+                   'AnnealingFcn', @(o, p) annealingfcn(o, p, numLabel) ...
+                   );
 
-% From Equation 10 (Page 2326)
-C = 2; % As per Section 4.1, Page 2327
-temp = @(t) C / log(t + 1);
 
-for i = 1:num_iterations
+for iter = 1:numIter
   
   % E-STEP
   % TODO:
   %  - Vectorize this
-  for m = 1:num_classes
-    class_index = (label == m);
-    est_mean = mean(features(class_index, :), 1);
-    est_std = std(features(class_index, :), 0, 1);
+  for m = numLabel:-1:1
+    pd{m} = fitdist(image(label == m), 'Normal');
   end
     
   % M-STEP
+  
+  % Update objective function with new alpha every iteration.
+  objectiveE = @(x) objectivefcn(x, image, pd, iter);
+  
+  [label, E] = simulannealbnd(objectiveE, label, [], [], ...
+                              saopt);
   
 end
   
