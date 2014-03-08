@@ -26,7 +26,12 @@ numLabel = 3;
 % TODO:
 %  - If greyscale, create 1-column feature vector.  If RGB, convert to HSV
 %    and create 3-column feature matrix
-image = double(imread('test1.png'));
+image = imread('test1.png');
+[row, col, feat] = size(image);
+if size(image, 3) == 3
+  image = rgb2gray(image);
+end
+image = double(image);
 
 % Initialize class labels as random vector
 numPixel = numel(image(:, :, 1));
@@ -34,7 +39,11 @@ label = randi(numLabel, numPixel, 1);
 
 % Configure simulated annealing options
 saopt = saoptimset('TemperatureFcn', @temperaturefcn, ...
-                   'AnnealingFcn', @(o, p) annealingfcn(o, p, numLabel) ...
+                   'AnnealingFcn', @(o, p) annealingfcn(o, p, numLabel), ...
+                   'ReannealInterval', numel(label), ...
+                   'MaxFunEval', 100 * numel(label), ...
+                   'Display', 'iter', ...
+                   'OutputFcns', @(o, p, f) outputfcn(o, p, f, row, col) ...
                    );
 
 
@@ -43,6 +52,7 @@ for iter = 1:numIter
   % E-STEP
   % TODO:
   %  - Vectorize this
+  %  - Handle all features.
   for m = numLabel:-1:1
     pd{m} = fitdist(image(label == m), 'Normal');
   end
@@ -54,6 +64,5 @@ for iter = 1:numIter
   
   [label, E] = simulannealbnd(objectiveE, label, [], [], ...
                               saopt);
-  
 end
   
