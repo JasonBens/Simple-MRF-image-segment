@@ -5,9 +5,10 @@ function newLabel = annealingfcn(optimValues, problem, numLabel)
   
   newLabel = optimValues.x;
   
-  initPercent = 1;
-  numUpdate = max(1, ...
-    round(problem.nvar / (initPercent * (optimValues.iteration + 1))));
+  initPercent = 0.1;
+  numUpdate = max(1, round(problem.nvar * initPercent / 100));
+  %numUpdate = max(1, ...
+  %  round(problem.nvar / (initPercent * (optimValues.iteration + 1))));
 
   %numUpdate = 1;
   

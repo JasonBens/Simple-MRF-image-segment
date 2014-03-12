@@ -59,10 +59,13 @@ for iter = 1:numIter
     
   % M-STEP
   
+  % This is an ugly workaround to clear the peristent variables in
+  % objectivefcn, which shouldn't be hanging around between iterations.
+  objectivefcn();
+  
   % Update objective function with new alpha every iteration.
   objectiveE = @(x) objectivefcn(x, image, pd, iter);
   
   [label, E] = simulannealbnd(objectiveE, label, [], [], ...
                               saopt);
 end
-  
