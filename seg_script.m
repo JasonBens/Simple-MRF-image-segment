@@ -17,6 +17,8 @@
 %
 %
 
+diary('output.txt');
+
 % Definitions
 % TODO: Put this in a function definition
 numIter = 150;
@@ -28,20 +30,27 @@ numLabel = 3;
 %    and create 3-column feature matrix
 image = imread('test1.png');
 [row, col, feat] = size(image);
-if size(image, 3) == 3
-  image = rgb2gray(image);
-end
+%if size(image, 3) == 3
+%  image = rgb2gray(image);
+%end
 image = double(image);
 
-% Initialize class labels as random vector
-numPixel = numel(image(:, :, 1));
-label = randi(numLabel, numPixel, 1);
+% Bin mean standard deviation of each feature to initialize class labels
+[~, ix] = sort(mean(zscore(reshape(image, [], feat), 0, 1), 2));
+bin = round(linspace(1, numel(ix), numLabel + 1));
+
+label = zeros(size(ix));
+for i = 1:numLabel
+  %index = bin(i) <= ix & ix <= bin(i+1);
+  label(ix(bin(i):bin(i+1))) = i;
+end
+
 
 % Configure simulated annealing options
 saopt = saoptimset('TemperatureFcn', @temperaturefcn, ...
                    'AnnealingFcn', @(o, p) annealingfcn(o, p, numLabel), ...
-                   'ReannealInterval', numel(label), ...
-                   'MaxFunEval', 100 * numel(label), ...
+                   'ReannealInterval', 2000, ...
+                   'StallIterLimit', 1000, ...
                    'Display', 'iter', ...
                    'OutputFcns', @(o, p, f) outputfcn(o, p, f, row, col) ...
                    );
@@ -68,4 +77,9 @@ for iter = 1:numIter
   
   [label, E] = simulannealbnd(objectiveE, label, [], [], ...
                               saopt);
+  imwrite(uint8(reshape(label, row, col) * 255 / max(label)), ...
+          sprintf('iter%d.png', iter));
+
 end
+
+diary off
