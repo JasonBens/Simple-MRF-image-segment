@@ -55,7 +55,7 @@ saopt = saoptimset('TemperatureFcn', @temperaturefcn, ...
                    'OutputFcns', @(o, p, f) outputfcn(o, p, f, row, col) ...
                    );
 
-
+convergenceTest = zeros(1, numIter);
 for iter = 1:numIter
   
   % E-STEP
@@ -80,6 +80,12 @@ for iter = 1:numIter
   imwrite(uint8(reshape(label, row, col) * 255 / max(label)), ...
           sprintf('iter%d.png', iter));
 
+  convergenceTest(iter) = E(1);
+  if iter >= 3 && std(convergenceTest(iter-2:iter)) / convergenceTest(iter)<0.0001
+      fprintf('Labels have convergerged: %d\n', iter);
+      %break;
+  end
+  
 end
 
 diary off
